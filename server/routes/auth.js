@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { authLimiter } = require('../middleware/rateLimiter');
 
 // Generate JWT token
 const generateToken = (userId) => {
@@ -13,7 +14,7 @@ const generateToken = (userId) => {
 // @route   POST /api/auth/signup
 // @desc    Register a new user
 // @access  Public
-router.post('/signup', async (req, res) => {
+router.post('/signup', authLimiter, async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
@@ -52,7 +53,7 @@ router.post('/signup', async (req, res) => {
 // @route   POST /api/auth/login
 // @desc    Login user
 // @access  Public
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
 
