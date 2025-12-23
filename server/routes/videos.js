@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const Video = require('../models/Video');
 const auth = require('../middleware/auth');
 
@@ -54,15 +55,21 @@ router.get('/user/:userId', auth, async (req, res) => {
 // @access  Private
 router.get('/:id', auth, async (req, res) => {
   try {
-    const video = await Video.findById(req.params.id);
+    // Validate ObjectId format
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid video ID' });
+    }
+
+    // Increment view count atomically
+    const video = await Video.findByIdAndUpdate(
+      req.params.id,
+      { $inc: { views: 1 } },
+      { new: true }
+    );
     
     if (!video) {
       return res.status(404).json({ message: 'Video not found' });
     }
-
-    // Increment view count
-    video.views += 1;
-    await video.save();
 
     res.json(video);
   } catch (error) {
@@ -102,6 +109,11 @@ router.post('/', auth, async (req, res) => {
 // @access  Private
 router.put('/:id', auth, async (req, res) => {
   try {
+    // Validate ObjectId format
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid video ID' });
+    }
+
     const video = await Video.findById(req.params.id);
 
     if (!video) {
@@ -137,6 +149,11 @@ router.put('/:id', auth, async (req, res) => {
 // @access  Private
 router.delete('/:id', auth, async (req, res) => {
   try {
+    // Validate ObjectId format
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid video ID' });
+    }
+
     const video = await Video.findById(req.params.id);
 
     if (!video) {
