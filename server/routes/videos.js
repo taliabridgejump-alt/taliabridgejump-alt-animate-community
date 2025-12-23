@@ -8,14 +8,44 @@ const auth = require('../middleware/auth');
 // @access  Private (requires authentication)
 router.get('/', auth, async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const skip = (page - 1) * limit;
+
     const videos = await Video.find({ isPublic: true })
       .sort({ createdAt: -1 })
-      .limit(50);
+      .skip(skip)
+      .limit(limit);
     
-    res.json(videos);
+    const total = await Video.countDocuments({ isPublic: true });
+    
+    res.json({
+      videos,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     console.error('Error fetching videos:', error);
     res.status(500).json({ message: 'Server error fetching videos' });
+  }
+});
+
+// @route   GET /api/videos/user/:userId
+// @desc    Get videos by user
+// @access  Private
+router.get('/user/:userId', auth, async (req, res) => {
+  try {
+    const videos = await Video.find({ userId: req.params.userId })
+      .sort({ createdAt: -1 });
+    
+    res.json(videos);
+  } catch (error) {
+    console.error('Error fetching user videos:', error);
+    res.status(500).json({ message: 'Server error fetching user videos' });
   }
 });
 
@@ -123,21 +153,6 @@ router.delete('/:id', auth, async (req, res) => {
   } catch (error) {
     console.error('Error deleting video:', error);
     res.status(500).json({ message: 'Server error deleting video' });
-  }
-});
-
-// @route   GET /api/videos/user/:userId
-// @desc    Get videos by user
-// @access  Private
-router.get('/user/:userId', auth, async (req, res) => {
-  try {
-    const videos = await Video.find({ userId: req.params.userId })
-      .sort({ createdAt: -1 });
-    
-    res.json(videos);
-  } catch (error) {
-    console.error('Error fetching user videos:', error);
-    res.status(500).json({ message: 'Server error fetching user videos' });
   }
 });
 

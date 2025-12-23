@@ -26,7 +26,7 @@ export default function CommunityLibrary() {
 
       if (response.ok) {
         const data = await response.json();
-        setVideos(data);
+        setVideos(data.videos || data);
       } else {
         console.error('Failed to fetch videos');
       }
